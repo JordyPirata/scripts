@@ -52,6 +52,13 @@ This guide will help you set up the scripts for easy access from anywhere on you
 
    Repeat this for other scripts to ensure they are accessible.
 
+5. **Remove the git repo**
+   remove this git repo
+
+   ```bash
+   rm -rf scripts
+   ```
+
 ## Notes
 
 - Ensure all scripts have unique and descriptive names before moving them to `~/.local/bin`.
