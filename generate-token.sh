@@ -34,4 +34,12 @@ echo "$hash"
 echo
 echo "🔢 Base32 (for easy verbal transmission):"
 echo "$base32"
+echo
 
+# Ask if the user wants to save to a .env file
+read -p "Do you want to save the hash and base32 to a .env file? [y/N]: " save_env
+if [[ "$save_env" =~ ^[Yy]$ ]]; then
+    echo "TOKEN_HASH=$hash" >> .env
+    echo "TOKEN_BASE32=$base32" >> .env
+    echo "Values saved to .env file."
+fi
