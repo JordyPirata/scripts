@@ -1,17 +1,32 @@
 #!/bin/bash
+set -euo pipefail # Exit on error, unset variable, or pipe failure
 
-# Show help message
-if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-    echo "Usage: ./generate-token.sh"
+# --- Configuration ---
+# The Diceware wordlist file. Expected to be in the same directory as the script.
+# Download from: https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt
+readonly WORDLIST="eff_large_wordlist.txt"
+readonly NUM_WORDS=6 # Number of words for the passphrase
+
+# --- Help Message ---
+# Show help message if -h or --help is provided.
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    echo "Usage: $0 [-y|--yes]"
     echo
     echo "Generates a Diceware passphrase, its SHA-256 hash, and a Base32 encoding."
+    echo "The script expects '$WORDLIST' to be present in the current directory."
+    echo
+    echo "Flags:"
+    echo "  -y, --yes   Automatic yes to prompts; enables non-interactive mode."
+    echo "              In this mode, the raw passphrase is NOT printed to stdout."
+    echo "              If a .env file exists, it will be overwritten without a prompt."
     echo
     echo "To decode the Base32 string in your console, use:"
     echo "  echo Base32String | base32 -d"
     exit 0
 fi
 
-# Parse flags
+# --- Parse Flags ---
+# Check for -y or --yes flag for non-interactive mode.
 AUTO_YES=0
 for arg in "$@"; do
     if [[ "$arg" == "-y" || "$arg" == "--yes" ]]; then
@@ -19,14 +34,18 @@ for arg in "$@"; do
     fi
 done
 
-# Check if the wordlist exists
-WORDLIST="eff_large_wordlist.txt"
+# --- Prerequisite Check ---
+# Check if the wordlist file exists.
 if [ ! -f "$WORDLIST" ]; then
-    echo "Downloading EFF Diceware wordlist..."
-    curl -s https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt -o "$WORDLIST"
+    echo "Error: Wordlist '$WORDLIST' not found. Please ensure it is available." >&2
+    echo "Please download it from https://www.eff.org/files/2016/07/18/eff_large_wordlist.txt" >&2
+    echo "and place it in the same directory as this script." >&2
+    exit 1
 fi
 
-# Function to generate a word using 5 dice rolls (base 6)
+# --- Core Functions ---
+# Function to generate a random dice roll string (e.g., "12345")
+# Uses Bash's $RANDOM. For highly sensitive cryptographic material,
 get_word() {
     roll=""
     for _ in {1..5}; do
@@ -35,6 +54,7 @@ get_word() {
     grep "^$roll" "$WORDLIST" | cut -f2
 }
 
+# --- Generation Logic ---
 # Generate a phrase of 6 words
 passphrase=$(for i in {1..6}; do get_word; done | paste -sd' ')
 
@@ -44,7 +64,7 @@ hash=$(printf "$passphrase" | sha256sum | awk '{print $1}')
 # Encode in Base32
 base32=$(echo -n "$passphrase" | base32 | tr -d '\n')
 
-# Show results
+# --- Display Results ---
 echo "🎲 Diceware passphrase:"
 echo "$passphrase"
 echo
@@ -55,6 +75,7 @@ echo "🔢 Base32 (for easy verbal transmission):"
 echo "$base32"
 echo
 
+# --- Save to .env file ---
 # Ask if the user wants to save to a .env file
 if [[ $AUTO_YES -eq 1 ]]; then
     save_env="y"
