@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Show help message
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: ./generate-token.sh"
+    echo
+    echo "Generates a Diceware passphrase, its SHA-256 hash, and a Base32 encoding."
+    echo
+    echo "To decode the Base32 string in your console, use:"
+    echo "  echo Base32String | base32 -d"
+    exit 0
+fi
+
 # Check if the wordlist exists
 WORDLIST="eff_large_wordlist.txt"
 if [ ! -f "$WORDLIST" ]; then
@@ -22,8 +33,8 @@ passphrase=$(for i in {1..6}; do get_word; done | paste -sd' ')
 # Calculate the hash SHA-256
 hash=$(printf "$passphrase" | sha256sum | awk '{print $1}')
 
-# Encode in Base32 (requires xxd and base32)
-base32=$(echo "$hash" | xxd -r -p | base32)
+# Encode in Base32
+base32=$(echo -n "$passphrase" | base32 | tr -d '\n')
 
 # Show results
 echo "🎲 Diceware passphrase:"
