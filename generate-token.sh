@@ -17,7 +17,7 @@ get_word() {
 }
 
 # Generate a phrase of 6 words
-passphrase=$(for i in {1..6}; do get_word; done | paste -sd'-')
+passphrase=$(for i in {1..6}; do get_word; done | paste -sd' ')
 
 # Calculate the hash SHA-256
 hash=$(printf "$passphrase" | sha256sum | awk '{print $1}')
